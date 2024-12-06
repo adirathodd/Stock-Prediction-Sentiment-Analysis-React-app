@@ -8,6 +8,7 @@ from transformers import pipeline
 import torch
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+import re
 
 # Set up the Chrome driver
 chrome_options = Options()
@@ -88,16 +89,18 @@ def scrape_yahoo_finance(stock_symbol):
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     news_list = []
 
-    news = soup.find_all(class_="stream-item story-item yf-1usaaz9")
+    news_stream_div = soup.find('div', attrs={"data-testid": "news-stream"})
+    first_li = news_stream_div.find('li') if news_stream_div else None
+    news = soup.find_all(class_=" ".join(first_li.attrs['class']))
     
     for new in news:
         title = new.a.get("aria-label")
-        date_span = new.find(class_="publishing yf-1weyqlp")
+        date_span = new.find(class_=re.compile("^publishing"))
         time_date = date_span.text.strip().split("•")[-1]
         date = convert_relative_time_to_dates(time_date)
         news_list.append([date, title])
     
     driver.quit()
     df = pd.DataFrame(news_list, columns=['Date', 'Title'])
- 
+    print(df)
     return sentiment_analysis(df)
