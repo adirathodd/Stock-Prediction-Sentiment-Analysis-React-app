@@ -88,17 +88,16 @@ def scrape_yahoo_finance(stock_symbol):
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     news_list = []
 
-    news = soup.find_all(class_="stream-item yf-7rcxn")
+    news = soup.find_all(class_="stream-item story-item yf-1usaaz9")
     
     for new in news:
         title = new.a.get("aria-label")
-        date_span = new.find(class_="publishing font-condensed yf-da5pxu")
+        date_span = new.find(class_="publishing yf-1weyqlp")
         time_date = date_span.text.strip().split("•")[-1]
         date = convert_relative_time_to_dates(time_date)
         news_list.append([date, title])
     
     driver.quit()
-
     df = pd.DataFrame(news_list, columns=['Date', 'Title'])
  
     return sentiment_analysis(df)
